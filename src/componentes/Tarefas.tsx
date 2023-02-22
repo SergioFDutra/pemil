@@ -56,15 +56,12 @@ export default function Tarefas() {
     }
 
     const editarTarefa = async (id: number) => {
-        console.log("Editando tarefas");
-        supabase.channel('custom-update-channel').on(
-            'postgres_changes',
-            { event: 'UPDATE', schema: 'public', table: 'tarefas' },
-            (payload) => {
-                console.log('Change received!', payload)
-            }
-        )
-            .subscribe()
+        console.log("Editando tarefas", id);
+
+        await supabase
+            .from('tarefas')
+            .update({ descricao: 'textEditar.value' })
+            .eq('id', id)
     }
 
     const removerTarefa = async (id: number) => {
@@ -78,17 +75,11 @@ export default function Tarefas() {
     }
 
     const selecionaStatus = async (status: boolean) => {
-        console.log("Selecionando status",status);
+        console.log("Selecionando status", status);
         let { data: tarefas, error } = await supabase
             .from('tarefas')
             .select('status')
         if (error) console.log('error', error)
-
-        else {
-            setTarefas(tarefas)
-            console.log(tarefas)
-        }
-
 
     }
 
@@ -113,15 +104,14 @@ export default function Tarefas() {
                         {tarefas?.map(tarefa => (
                             <li key={tarefa.id}>
                                 <span>{tarefa.descricao}</span>
-                                <input type="text" name="descricao" id="descricao" 
-                                    placeholder='Editar...' value={descricao}
+                                <input type="textEditar" name="descricao" id="descricao"
+                                    placeholder='Editar...'
                                     onChange={(e) => {
-                                        setError('')
-                                        setTarefas(e.target.value)
+                                        setDescricao(e.target.value)
                                     }}
                                 />
-                                <button className="btn-black" onClick={() => editarTarefa(tarefa)}>
-                                   Editar
+                                <button onClick={() => editarTarefa(tarefa.id)}>
+                                    Editar
                                 </button>
                                 <button onClick={() => removerTarefa(tarefa.id)}>Remover</button>
                             </li>
@@ -144,6 +134,9 @@ export default function Tarefas() {
                         {tarefas?.map(tarefa => (
                             <li key={tarefa.id}>
                                 <span>{tarefa.descricao}</span>
+                                {/* <button className="btn-black" onClick={() => editarTarefa(tarefa)}>
+                                    Editar
+                                </button> */}
                             </li>
                         ))}
                     </ol>
