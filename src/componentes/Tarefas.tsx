@@ -3,15 +3,16 @@ import { supabase } from '../../lib/initSupabase';
 
 interface Tarefa {
     id?: number;
-    descricao?: string
+    descricao: string
     status: string // descobrir como usar enum
     data_criacao: string //descobrir formato de datetime
 }
-  const [formData, setFormData] = useState({
-    descricao: '',
-});
 
 export default function Tarefas() {
+
+    const [descricao, setDescricao] = useState<string>();
+
+    const [tarefas, setTarefas] = useState<Tarefa[]>();
 
     useEffect(() => {
         buscaTarefas()
@@ -20,67 +21,121 @@ export default function Tarefas() {
     const buscaTarefas = async () => {
         console.log("Buscando tarefas");
         let { data: tarefas, error } = await supabase
-        .from('tarefas')
-        .select('*')
+            .from('tarefas')
+            .select('*')
+
         if (error) console.log('error', error)
-        else{
+
+        else {
             setTarefas(tarefas)
             console.log(tarefas)
         }
     }
 
-    const adicionaTarefa = async(/*event: FormEvent*/) => {
-        // event.preventDefault();
-        // const { descricao } = formData;
+    const adicionaTarefa = async (event: FormEvent) => {
+        event.preventDefault()
 
-        // const data = new FormData()
-        // data.append('descricao', descricao);
+        console.log("Adicionando tarefas");
 
-        let { data: tarefas, error } = await supabase
-        .from('tarefas')
-        .insert([
-            { descricao:   'descricao'},
-        ])
+        let { data: tarefasAlteradas, error } = await supabase
+            .from('tarefas')
+            .insert([
+                { descricao: descricao },
+            ])
+            .select()
+
         if (error) console.log('error', error)
-        else{
+
+        else {
+            tarefas.push(tarefasAlteradas[0])
             setTarefas(tarefas)
             console.log(tarefas)
         }
         alert('Tarefa adicionada!');
     }
 
-    const editarTarefa = async() => {
+    const editarTarefa = async () => {
+        console.log("Editando tarefas");
         const tarefas = supabase.channel('custom-update-channel').on(
-        'postgres_changes',
-        { event: 'UPDATE', schema: 'public', table: 'tarefas' },
-        (payload) => {
-        console.log('Change received!', payload)
+            'postgres_changes',
+            { event: 'UPDATE', schema: 'public', table: 'tarefas' },
+            (payload) => {
+                console.log('Change received!', payload)
+            }
+        )
+            .subscribe()
+    }
+
+    const removerTarefa = async () => {
+        console.log("Removendo tarefas");
+        const { data, error } = await supabase
+            .from('tarefas')
+            .delete()
+            .eq('some_column', 'someValue')
+    }
+
+    const selecionaStatus = async () => {
+        console.log("Selecionando status");
+        let { data: tarefas, error } = await supabase
+            .from('tarefas')
+            .select('status')
+        if (error) console.log('error', error)
+
+        else {
+            setTarefas(tarefas)
+            console.log(tarefas)
         }
-  )
-  .subscribe()
-        
+
 
     }
 
     let nomeCliente: string = ""
 
-    return(
-        
-        <div className="container">
-            <div className="new-task-container">
-                <div className="labelTarefa"/>
-                <input type="text" id="txtTarefa" placeholder='Tarefa...' />
-                <button className="new-task-button" onClick={adicionaTarefa}>Adicionar</button>
+    return (
+        <div>
+            <div className="container">
+
+                <form className="new-task-container" onSubmit={adicionaTarefa}>
+                    <label htmlFor="name" className="labelTarefa"></label>
+                    <input type="text" name="descricao" id="descricao"
+                        placeholder='Digite uma nova tarefa...'
+                        onChange={(e) => setDescricao(e.target.value)}
+                    />
+                    <button className="new-task-button" type='submit'>Adicionar</button>
+                </form>
+
+
+                <form className="tasks-container">
+                    <ol className="items-grid">
+                        {tarefas?.map(tarefa => (
+                            <li key={tarefa.id}>
+                                <span>{tarefa.descricao}</span>
+                                <button onClick={editarTarefa}>Editar</button>
+                                <button onClick={removerTarefa}>Remover</button>
+                            </li>
+                        ))}
+                    </ol>
+                </form>
             </div>
-            <div className="tasks-container">
+
+            <div className="container">
+
+
+                <form className="new-task-container" onSubmit={selecionaStatus}>
+                    <div className="label">Tarefa Realizada</div>
+                    <input type="checkbox" id="txtPesquisa" />
+                    <button className="new-task-button" type='submit'>Pesquisar</button>
+                </form>
+                <div className="tasks-container">
+                    <ol className="items-grid">
+                        {tarefas?.map(tarefa => (
+                            <li key={tarefa.id}>
+                                <span>{tarefa.descricao}</span>
+                            </li>
+                        ))}
+                    </ol>
+                </div>
             </div>
-            <div className="new-task-container">
-                <div className="label"/>
-                <input type="text" id="txtPesquisa" maxLength={150} />
-                <button className="new-task-button">Pesquisar</button>
-            </div>
-            <div className="tasks-container">
-            </div>
-        </div> 
+        </div>
     )
 }
