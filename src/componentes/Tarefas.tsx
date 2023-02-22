@@ -12,7 +12,7 @@ export default function Tarefas() {
 
     const [descricao, setDescricao] = useState<string>();
 
-    const [tarefas, setTarefas] = useState<Tarefa[]>();
+    const [tarefas, setTarefas] = useState([]);
 
     useEffect(() => {
         buscaTarefas()
@@ -23,6 +23,7 @@ export default function Tarefas() {
         let { data: tarefas, error } = await supabase
             .from('tarefas')
             .select('*')
+            .order('id', true)
 
         if (error) console.log('error', error)
 
@@ -54,9 +55,9 @@ export default function Tarefas() {
         alert('Tarefa adicionada!');
     }
 
-    const editarTarefa = async () => {
+    const editarTarefa = async (id: number) => {
         console.log("Editando tarefas");
-        const tarefas = supabase.channel('custom-update-channel').on(
+        supabase.channel('custom-update-channel').on(
             'postgres_changes',
             { event: 'UPDATE', schema: 'public', table: 'tarefas' },
             (payload) => {
@@ -66,16 +67,18 @@ export default function Tarefas() {
             .subscribe()
     }
 
-    const removerTarefa = async () => {
-        console.log("Removendo tarefas");
-        const { data, error } = await supabase
+    const removerTarefa = async (id: number) => {
+
+        console.log("Removendo tarefas", id);
+        await supabase
             .from('tarefas')
             .delete()
-            .eq('some_column', 'someValue')
+            .eq('id', id)
+        setTarefas(tarefas.filter((x) => x.id != id))
     }
 
-    const selecionaStatus = async () => {
-        console.log("Selecionando status");
+    const selecionaStatus = async (status: boolean) => {
+        console.log("Selecionando status",status);
         let { data: tarefas, error } = await supabase
             .from('tarefas')
             .select('status')
@@ -105,18 +108,28 @@ export default function Tarefas() {
                 </form>
 
 
-                <form className="tasks-container">
+                <form className="tasks-container" >
                     <ol className="items-grid">
                         {tarefas?.map(tarefa => (
                             <li key={tarefa.id}>
                                 <span>{tarefa.descricao}</span>
-                                <button onClick={editarTarefa}>Editar</button>
-                                <button onClick={removerTarefa}>Remover</button>
+                                <input type="text" name="descricao" id="descricao" 
+                                    placeholder='Editar...' value={descricao}
+                                    onChange={(e) => {
+                                        setError('')
+                                        setTarefas(e.target.value)
+                                    }}
+                                />
+                                <button className="btn-black" onClick={() => editarTarefa(tarefa)}>
+                                   Editar
+                                </button>
+                                <button onClick={() => removerTarefa(tarefa.id)}>Remover</button>
                             </li>
                         ))}
                     </ol>
                 </form>
             </div>
+
 
             <div className="container">
 
