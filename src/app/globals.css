@@ -168,6 +168,8 @@ a {
   padding: 6px;
   margin-left: 6px;
   cursor: pointer;
+  margin-top: 3px;
+  align-items: end;
 }
 
 .tasks-container {
@@ -182,11 +184,15 @@ a {
   border-right-style: solid;
   justify-content: space-between;
   margin-bottom: auto;
-
+  display: flex;
 }
 
 .items-grid {
   justify-content: space-between;
-  border-bottom-style: initial;
+  border-bottom-style: initial; 
 }
 
+.textEditar{
+  margin-left: 6px;
+  margin-block: 6px;
+}
