@@ -25,12 +25,12 @@ export default function Tarefas() {
         let { data: tarefas, error } = await supabase
             .from('tarefas')
             .select('*')
-            .order('id', {ascending: true})
+            .order('id', { ascending: true })
 
         if (error) console.log('error', error)
 
         else {
-            setTarefas(tarefas)
+            setTarefas(tarefas!)
             console.log(tarefas)
         }
     }
@@ -50,15 +50,19 @@ export default function Tarefas() {
         if (error) console.log('error', error)
 
         else {
-            const tarefasAtuais = tarefas.concat(tarefasAlteradas)
+            const tarefasAtuais = tarefas.concat(tarefasAlteradas!)
             console.log(tarefasAtuais)
             setTarefas(tarefasAtuais)
         }
     }
 
-    const editarTarefa = async (e: Event, id: number) => {
+    const editarTarefa = async (e: React.MouseEvent<HTMLButtonElement>, id?: number) => {
         e.preventDefault()
         console.log("Editando tarefa", id);
+
+        if (id === undefined) {
+            return
+        }
 
         await supabase
             .from('tarefas')
@@ -68,18 +72,23 @@ export default function Tarefas() {
             .eq('id', id)
 
         let tarefasAtuais: Tarefa[] = []
-        for (let tarefa of tarefas){
-            if(tarefa.id === id){
+        for (let tarefa of tarefas) {
+            if (tarefa.id === id) {
                 tarefa.descricao = descricao
             }
-            tarefasAtuais.push(tarefa)        
+            tarefasAtuais.push(tarefa)
         }
         console.log(tarefasAtuais)
         setTarefas(tarefasAtuais)
     }
 
-    const concluirTarefa = async (e: Event, id: number) => {
+    const concluirTarefa = async (e: React.MouseEvent<HTMLButtonElement>, id?: number) => {
         e.preventDefault()
+
+        if (id === undefined) {
+            return
+        }
+
         console.log("Editando tarefa", id);
 
         await supabase
@@ -90,34 +99,39 @@ export default function Tarefas() {
             .eq('id', id)
 
         let tarefasAtuais: Tarefa[] = []
-        for (let tarefa of tarefas){
-            if(tarefa.id === id){
+        for (let tarefa of tarefas) {
+            if (tarefa.id === id) {
                 tarefa.status = true
             }
-            tarefasAtuais.push(tarefa)        
+            tarefasAtuais.push(tarefa)
         }
 
         console.log(tarefasAtuais)
         setTarefas(tarefasAtuais)
     }
 
-    const removerTarefa = async (e: Event, id: number) => {
+    const removerTarefa = async (e: React.MouseEvent<HTMLButtonElement>, id?: number) => {
         e.preventDefault()
+
+        if (id === undefined) {
+            return
+        }
+
         console.log("Removendo tarefas", id);
         await supabase
             .from('tarefas')
             .delete()
             .eq('id', id)
-        
+
         setTarefas(tarefas.filter((x) => x.id != id))
     }
 
-    const selecionaStatus = async (e: Event) => {
+    const selecionaStatus = async (e: React.MouseEvent<HTMLButtonElement>) => {
         e.preventDefault()
         console.log("Selecionando status", status)
         if (status === 'true') {
             setTarefasFiltradas(tarefas?.filter(tarefa => tarefa.status === true))
-        } else if (status === 'false' ) {
+        } else if (status === 'false') {
             setTarefasFiltradas(tarefas?.filter(tarefa => tarefa.status === false))
         } else if (status === 'todas') {
             setTarefasFiltradas(tarefas)
