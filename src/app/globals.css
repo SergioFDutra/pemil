@@ -189,10 +189,8 @@ a {
 
 .items-grid {
   justify-content: space-between;
-  border-bottom-style: initial; 
 }
 
 .textEditar{
-  margin-left: 6px;
-  margin-block: 6px;
+  margin-left: 12px;
 }

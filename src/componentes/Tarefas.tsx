@@ -5,17 +5,16 @@ import { supabase } from '../../lib/initSupabase';
 interface Tarefa {
     id?: number;
     descricao: string
-    status: string // descobrir como usar enum
+    status: boolean
     data_criacao: string //descobrir formato de datetime
 }
 
 export default function Tarefas() {
 
-    const [descricao, setDescricao] = useState<string>();
-
-    const [tarefas, setTarefas] = useState([]);
-
-    const [selectedStatus, setSelectedStatus] = useState('');
+    const [descricao, setDescricao] = useState<string>('');
+    const [tarefas, setTarefas] = useState<Tarefa[]>([]);
+    const [status, setStatus] = useState<string>('');
+    const [tarefasFiltradas, setTarefasFiltradas] = useState<Tarefa[]>([]);
 
     useEffect(() => {
         buscaTarefas()
@@ -26,7 +25,7 @@ export default function Tarefas() {
         let { data: tarefas, error } = await supabase
             .from('tarefas')
             .select('*')
-            .order('id', true)
+            .order('id', {ascending: true})
 
         if (error) console.log('error', error)
 
@@ -51,15 +50,15 @@ export default function Tarefas() {
         if (error) console.log('error', error)
 
         else {
-            tarefas.push(tarefasAlteradas[0])
-            setTarefas(tarefas)
-            console.log(tarefas)
+            const tarefasAtuais = tarefas.concat(tarefasAlteradas)
+            console.log(tarefasAtuais)
+            setTarefas(tarefasAtuais)
         }
-        alert('Tarefa adicionada!');
     }
 
-    const editarTarefa = async (id: number) => {
-        console.log("Editando tarefas", id);
+    const editarTarefa = async (e: Event, id: number) => {
+        e.preventDefault()
+        console.log("Editando tarefa", id);
 
         await supabase
             .from('tarefas')
@@ -67,37 +66,63 @@ export default function Tarefas() {
                 { descricao: descricao },
             ])
             .eq('id', id)
+
+        let tarefasAtuais: Tarefa[] = []
+        for (let tarefa of tarefas){
+            if(tarefa.id === id){
+                tarefa.descricao = descricao
+            }
+            tarefasAtuais.push(tarefa)        
+        }
+        console.log(tarefasAtuais)
+        setTarefas(tarefasAtuais)
     }
 
-    const removerTarefa = async (id: number) => {
+    const concluirTarefa = async (e: Event, id: number) => {
+        e.preventDefault()
+        console.log("Editando tarefa", id);
 
+        await supabase
+            .from('tarefas')
+            .update([
+                { status: true },
+            ])
+            .eq('id', id)
+
+        let tarefasAtuais: Tarefa[] = []
+        for (let tarefa of tarefas){
+            if(tarefa.id === id){
+                tarefa.status = true
+            }
+            tarefasAtuais.push(tarefa)        
+        }
+
+        console.log(tarefasAtuais)
+        setTarefas(tarefasAtuais)
+    }
+
+    const removerTarefa = async (e: Event, id: number) => {
+        e.preventDefault()
         console.log("Removendo tarefas", id);
         await supabase
             .from('tarefas')
             .delete()
             .eq('id', id)
+        
         setTarefas(tarefas.filter((x) => x.id != id))
     }
 
-    const selecionaStatus = async (status: any) => {
-        console.log("Selecionando status", status);
-        let { data: tarefas, error } = await supabase
-            .from('tarefas')
-            .select('status')
-        if (error) console.log('error', error)
-
-        if ([{ status: 'true' }]) {
-
-
-        }else if([{ status: 'false' }]){
-
-        }else if([{ status: 'todas' }]){
-
+    const selecionaStatus = async (e: Event) => {
+        e.preventDefault()
+        console.log("Selecionando status", status)
+        if (status === 'true') {
+            setTarefasFiltradas(tarefas?.filter(tarefa => tarefa.status === true))
+        } else if (status === 'false' ) {
+            setTarefasFiltradas(tarefas?.filter(tarefa => tarefa.status === false))
+        } else if (status === 'todas') {
+            setTarefasFiltradas(tarefas)
         }
-
     }
-
-    let nomeCliente: string = ""
 
     return (
         <div>
@@ -106,7 +131,7 @@ export default function Tarefas() {
                 <form className="new-task-container" onSubmit={adicionaTarefa}>
                     <label htmlFor="name" className="labelTarefa"></label>
                     <input type="text" name="descricao" id="descricao"
-                        placeholder='Digite uma nova tarefa...'
+                        placeholder='Digite uma nova tarefa...' maxLength={30}
                         onChange={(e) => setDescricao(e.target.value)}
                     />
                     <button className="new-task-button" type='submit'>Adicionar</button>
@@ -118,14 +143,15 @@ export default function Tarefas() {
                         {tarefas?.map(tarefa => (
                             <li key={tarefa.id}>
                                 <span>{tarefa.descricao}</span>
-                                <input type="textEditar" name="descricao" id="descricao"
+                                <input className='textEditar' type="text" name="descricao" id="descricao"
                                     placeholder='Editar...'
                                     onChange={(e) => {
                                         setDescricao(e.target.value)
                                     }}
                                 />
-                                <button className='new-task-button' onClick={() => editarTarefa(tarefa.id)}>Editar</button>
-                                <button className='new-task-button' onClick={() => removerTarefa(tarefa.id)}>Remover</button>
+                                <button className='new-task-button' onClick={(e) => editarTarefa(e, tarefa.id)}>Editar</button>
+                                <button className='new-task-button' onClick={(e) => removerTarefa(e, tarefa.id)}>Remover</button>
+                                <button className='new-task-button' onClick={(e) => concluirTarefa(e, tarefa.id)}>Concluir</button>
                             </li>
                         ))}
                     </ol>
@@ -135,32 +161,22 @@ export default function Tarefas() {
 
             <div className="container">
 
-                <form className="new-task-container" onSubmit={selecionaStatus}>
-                    <label> Escolha o tipo de tarefa:
-                        <select onChange={(e) => { setDescricao(e.target.value) }}>
+                <form className="new-task-container">
+                    <label className='textEditar'> Escolha o tipo de tarefa:
+                        <select className='textEditar' onChange={(e) => { setStatus(e.target.value) }}>
                             <option value="">Selecione</option>
                             <option value="true">Tarefas realizadas</option>
                             <option value="false">Tarefas não realizadas</option>
                             <option value="todas">Todas</option>
                         </select>
+                        <label>{ }</label>
                     </label>
-                    <button className="new-task-button" /*type='submit' value="Enviar"*/ onClick={() => selecionaStatus(tarefa.id)} >Pesquisar</button>
+                    <button className="new-task-button" onClick={(e) => selecionaStatus(e)} >Pesquisar</button>
                 </form>
 
-
-
-                {/* <form className="new-task-container" onSubmit={selecionaStatus}>
-                    <div className="label">Escolha o tipo de tarefa...</div>
-                    <select placeholder='Escolha o tipo de tarefa...'>
-                        <option value="realizada">Tarefas realizadas</option>
-                        <option value="naoRealizada">Tarefas não realizadas</option>
-                        <option selected value="todas">Todas</option>
-                    </select>
-                    <button className="new-task-button" type='submit'>Pesquisar</button>
-                </form> */}
                 <div className="tasks-container">
                     <ol className="items-grid">
-                        {tarefas?.map(tarefa => (
+                        {tarefasFiltradas?.map(tarefa => (
                             <li className='lista' key={tarefa.id}>
                                 <span>{tarefa.descricao}</span>
                             </li>
