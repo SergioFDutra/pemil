@@ -1,3 +1,15 @@
+# Introdução
+
+Projeto realizado como desafio de programação (Júnior) da Pemill. Com objetivos de criar uma aplicação web usando o framework Next.js. Utilizando TypeScript como linguagem de programação.
+
+A aplicação deve permitir ao usuário adicionar, editar e remover tarefas. As tarefas devem ser armazenadas em um banco de dados PostgreSQL.
+Deve ser possível filtrar as tarefas por status (concluídas/não concluídas).
+
+Além do guia abaixo, a solução também pode ser acessada em produção no ambiente da vercel através do link https://pemil-fz2tnz2y7-sergiofdutra.vercel.app/
+
+
+---
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
